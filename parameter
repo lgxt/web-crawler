@@ -1,0 +1,177 @@
+# -*-coding:utf-8 -*-
+import os
+import csv
+import codecs
+import jieba
+from pathlib import Path
+from bs4 import BeautifulSoup
+import pandas as pd
+import numpy
+
+# 在线直播
+title1 = ['直播']
+# 企业合作
+title2 = ['携手','协助','合作','联合','加盟','协议','签署','签约','联手','牵手','案例']
+# 活动会议
+title3 = ['会议','峰会','会场','大会','活动','举行','举办','开幕','训练']
+# 新品上市
+title4 = ['新品','发布','推出','开放','上线']
+title_tag = {'在线直播':title1,'企业合作':title2,'活动会议':title3,'新品上市':title4}
+
+# 在线直播
+tag1 = ['直播']
+# 企业合作
+tag2 = ['伙伴','仪式','启动','携手','协助','合作','联合','加盟','协议','签署','共同','签约','共建','共赢','联手','双方','牵手','效率','搭建','选择','传统','需求','解决','高效','成本','案例']
+# 活动会议
+tag3 = ['会议','峰会','会场','大会','议程','参加','活动','举行','致辞','主办','举办','邀请','探讨','参会','现场','讲座','日程','出席','开幕','训练',]
+# 新品上市
+tag4 = ['新品','解决方案','助力','咨询热线','发布','全新','推出','开放','上线']
+tag = {'在线直播':tag1,'企业合作':tag2,'活动会议':tag3,'新品上市':tag4}
+
+# 利用训练集进行参数选择
+# 统计不同文章中不同分类关键词出现的次数
+def category_train(path,title_tag,tag):
+    import_csv_dir = category_train()
+    output_csv_dir = Path.cwd().parent / 'category' / 'predict.csv'
+    csv_import = pd.read_csv(import_csv_dir)
+    word_final = []
+    for i in range(len(csv_import)):
+        title = csv_import['title'][i]
+        query = csv_import['query'][i]
+        import_html_dir = Path.cwd().parent / 'html' / query
+        title = title.replace("'", ' ').replace("|", '\\').replace('/', '\\')
+        html_file = codecs.open(os.path.join(import_html_dir, f'{title}.html'), 'r', 'utf-8').read()
+        end = 'media_tool_meta tips_global_primary meta_primary'
+        html_file = html_file[:html_file.rfind(end)]
+        txt = BeautifulSoup(html_file, features="lxml").get_text()
+
+        # 词频统计
+        count = jieba.lcut(txt)
+        word_count = {}
+
+        # 词频统计
+        for word in count:
+            # 不统计字数为一的词
+            if len(word) == 1:
+                continue
+            else:
+                word_count[word] = word_count.get(word, 0) + 1
+
+        word = list(set(count))
+
+        word_intersect = []
+        word_intersect.append(title)
+        word_intersect.append(csv_import['link'][i])
+
+        #统计各个关键词在标题中出现次数
+        for key, value in title_tag.items():
+            n = 0
+            for item in value:
+                n = title.count(item) + n
+            word_intersect.append(n)
+
+        #统计各个关键词在正文中出现次数
+        for key, value in tag.items():
+            intersect = list(set(value).intersection(set(word)))
+            freq = len(intersect)
+            word_intersect.append(freq)
+            word_intersect.append(intersect)
+        word_intersect.append(csv_import['category'][i])
+        word_final.append(word_intersect)
+
+    with codecs.open(filename=output_csv_dir, mode='w', encoding='utf-8-sig')as f:
+        write = csv.writer(f, dialect='excel')
+        write.writerow(['title', 'link', '在线直播t',"企业合作t", "活动会议t",'新品上市t',"在线直播",'tag1',"企业合作", 'tag2', "活动会议",'tag3', '新品上市','tag4','category',])
+
+        for item in word_final:
+            write.writerow(item)
+
+category_train()
+
+# 利用训练集进行参数选择
+# 根据之前predict.csv的结果预测并输出预测结果，可以利用输出的统计指标选择参数
+def predict_train(title_tag,tag,k1,n2,n3):
+    import_csv_dir = Path.cwd().parent / 'category' / 'predict.csv'
+    output_csv_dir = Path.cwd().parent / 'category' / 'predict.csv'
+    csv_import = pd.read_csv(import_csv_dir)
+    category_list = []
+    FN = 0
+    FP = 0
+    TN = 0
+    TP = 0
+    for i in range(len(csv_import)):
+        row = []
+        row = list(csv_import.iloc[i,:])
+        title_tag = {'在线直播': csv_import['在线直播t'][i], '企业合作': csv_import['企业合作t'][i], '活动会议': csv_import['活动会议t'][i],
+                     '新品上市': csv_import['新品上市t'][i]}
+
+        n = 0
+        lists = []
+
+        # 使用标题判断文章类型
+        for key, value in title_tag.items():
+            if value >= 1:
+                n += 1
+                lists.append(key)
+        if n == 1:
+            if lists[0] == '企业合作':
+                category = lists[0]
+        elif n >= 1:
+            if lists.count('企业合作') >= 1:
+                category = '企业合作'
+            else:
+                category = ''
+        elif n == 0:
+        
+            # 使用正文判断文章内容
+            fraction = csv_import['企业合作'][i]/(csv_import['新品上市'][i]+csv_import['企业合作'][i]+csv_import['活动会议'][i])
+            if csv_import['在线直播'][i] == 0 and fraction >= k1 and csv_import['企业合作'][i] >= n2:
+                category = '企业合作'
+            elif csv_import['在线直播'][i] == 0 and fraction < k1 and csv_import['企业合作'][i] >= n3:
+                category = '企业合作'
+            elif csv_import['在线直播'][i] >= 1:
+                category = ''
+            else:
+                category = ''
+        
+        #统计TP,TN,FP,FN，计算specifity和sensitivity，利用该统计指标，我们可以了解分类效果好坏
+        if category == '企业合作' and (csv_import['category'][i] == '企业合作' or csv_import['category'][i] == '客户案例'):
+            TP += 1
+        elif category == '' and (csv_import['category'][i] != '企业合作' and csv_import['category'][i] != '客户案例'):
+            TN += 1
+        elif category == '企业合作' and (csv_import['category'][i] != '企业合作' and csv_import['category'][i] != '客户案例'):
+            FP += 1
+        elif category == '' and (csv_import['category'][i] == '企业合作' or csv_import['category'][i] == '客户案例'):
+            FN += 1
+        row.append(category)
+        category_list.append(row)
+    print(TP,TN,FP,FN)
+    specificity = TN/(FP+TN)
+    sensitivity = TP/(TP+FN)
+    return k1,n2,n3,sensitivity,specificity
+    
+    #输出预测结果
+    with codecs.open(filename=output_csv_dir, mode='w', encoding='utf-8-sig')as f:
+        write = csv.writer(f, dialect='excel')
+        write.writerow(
+            ['title', 'link', '在线直播t', "企业合作t", "活动会议t", '新品上市t', "在线直播", 'tag1', "企业合作", 'tag2', "活动会议", 'tag3',
+            '新品上市', 'tag4', 'category', 'predict'])
+
+        for item in category_list:
+            write.writerow(item)
+
+#输出统计指标至roc.csv，帮助测试参数，最终选择0.7,1,6
+output_csv_dir = Path.cwd().parent / 'category' / 'roc.csv'
+rows = []
+for k1 in numpy.arange(0,1,0.1):
+    for n2 in range(0,10,1):
+        for n3 in range(0,10,1):
+            if n3>n2:
+                row = []
+                row = list(predict_train(k1,n2,n3))
+                rows.append(row)
+with codecs.open(filename=output_csv_dir, mode='w', encoding='utf-8-sig')as f:
+    write = csv.writer(f, dialect='excel')
+    write.writerow(['k1','n2','n3','sensitivity','specifity'])
+    for item in rows:
+        write.writerow(item)
