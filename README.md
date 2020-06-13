@@ -78,14 +78,19 @@ predict.category(query,tag,title_tag)
 predict.predict(query,tag,title_tag,k1,n2,n3)
 
 tag（用于正文筛选）title_tag（用于正文筛选）格式如下：
+
     # 在线直播
     title1 = ['直播']
+    
     # 企业合作
     title2 = ['携手','协助','合作','联合','加盟','协议','签署','签约','联手','牵手','案例']
+    
     # 活动会议
     title3 = ['会议','峰会','会场','大会','活动','举行','举办','开幕','训练']
+    
     # 新品上市
     title4 = ['新品','发布','推出','开放','上线']
+    
     title_tag = {'在线直播':title1,'企业合作':title2,'活动会议':title3,'新品上市':title4}
 
 **使用jieba提取关键词并分类效果较差，已放弃维护key_word以及contain_extract两个程序**
