@@ -49,7 +49,7 @@ for i in range(len(account)):
 #3.确定分词在同分类所有文章中的出现频率(文件自动保存至python运行路径下的category文件夹，名字为intersect_freq.csv）
 #freq_word.intersect(category)
 #2.寻找每个分类具有特异性的标签(文件自动保存至python运行路径下的category文件夹，名字为specific_tag.csv）
-#freq_word.category_special_tag()
+#freq_word.category_special_tag(ratio)
 
 #根据以上结果以及手动筛选经验确定不同分类的关键词，尝试使用上述关键词分类样本文件并选择合适参数
 #3.统计文章中不同分类关键词出现的次数,输入文件为
