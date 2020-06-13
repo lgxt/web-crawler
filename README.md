@@ -28,6 +28,7 @@ pandoc（使用brew安装）
 
 需使用代理ip，自动从网上获取免费ip并组装ip池，按以下链接操作：https://github.com/Python3WebSpider/ProxyPool
 query为微信公众号名称
+*经过验证代理ip对于微信数据爬取无效*
 
 **获取url以及title**，文件自动保存至python运行路径下的csv文件夹(sleep休眠时间，建议在3分钟(sleep=180)以上）
 
