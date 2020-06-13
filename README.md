@@ -83,5 +83,5 @@ tag（用于正文筛选）title_tag（用于正文筛选）格式如下：
     title4 = ['新品','发布','推出','开放','上线']
     title_tag = {'在线直播':title1,'企业合作':title2,'活动会议':title3,'新品上市':title4}
 
-
+**使用jieba提取关键词并分类效果较差，已放弃维护key_word以及contain_extract两个程序**
 
