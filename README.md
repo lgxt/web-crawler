@@ -50,20 +50,25 @@ extract_pic.extract_pic('中土红皮书')
 范例文件：category.csv，已进行手动文本分类
 
 1.限定某个分类，将文件内url对应文章分词，确定分词频率(path为category范例文件储存路径，文件自动保存至python运行路径下的category文件夹，名字为word_freq.csv
+
 freq_word.freq_word(path,category) 
 
 3.确定分词在同分类所有文章中的出现频率(文件自动保存至python运行路径下的category文件夹，名字为intersect_freq.csv）
+
 freq_word.intersect(category)
 
 2.寻找每个分类具有特异性的标签(文件自动保存至python运行路径下的category文件夹，名字为specific_tag.csv）
+
 freq_word.category_special_tag()
 
 根据以上结果以及手动筛选经验确定不同分类的关键词，尝试使用上述关键词分类样本文件并选择合适参数
 
 3.统计文章中不同分类关键词出现的次数,输入文件为
+
 parameter.category_train(path,title_tag,tag)
 
 4.分类（可手动筛选参数：k1,n2,n3，具体含义见文档）
+
 parameter.predict_train(title_tag,tag,k1,n2,n3)
 
 **根据标题及文章内容进行关键词分类**，文件自动保存至python运行路径下的category文件夹
