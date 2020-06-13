@@ -2,6 +2,26 @@
 5/25-5/30爬虫代码
 author：金方明
 
+**依赖包**
+requests
+json
+fake_useragent
+pandas 
+pathlib 
+urllib
+socket
+textrank4zh
+jieba 
+bs4 
+codecs
+threading
+uuid
+re
+filetype
+csv
+numpy
+pandoc（使用brew安装）
+
 **注意事项**
 用于从微信上爬取文章连接，下载html，图片以及进行关键词筛选，下载文件夹并保存至project路径即可使用py文档中函数
 需要一个微信公众号以及可以扫码的手机
