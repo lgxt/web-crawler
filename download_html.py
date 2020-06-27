@@ -11,18 +11,25 @@ import os
 from pathlib import Path
 import time
 
-def downloads(query,sleeps):
+def downloads(query,sleeps=6,download_all = False):
     work_dir = Path.cwd().parent / 'csv'
     export_dir = Path.cwd().parent / 'html'
     if not export_dir.exists():
         export_dir.mkdir()
-    #导入目标csv并分割
-    size= len(pd.read_csv(os.path.join(work_dir,f'{query}.csv')))
-    print(size)
+    html_export = export_dir / f'{query}'
+    if not export_dir.exists():
+        export_dir.mkdir()
+    num = len(list(html_export.glob('*.html')))
+    print(num)
+    # 导入目标csv并分割
+    file = pd.read_csv(os.path.join(work_dir, f'{query}.csv'))
+    print(len(file))
+    size = len(file)-num
+
     if size>=100:
         size_chuck = size//4
         size_residual = size%4
-        data = pd.read_csv(os.path.join(work_dir,f'{query}.csv'), chunksize=size_chuck)
+        data = pd.read_csv(os.path.join(work_dir,f'{query}.csv'),nrows=size,chunksize=size_chuck)
         for i, chuck in enumerate(data):
             chuck.to_csv(os.path.join(work_dir,'out{}_{}.csv'.format(i,query)),encoding='utf-8-sig')
         data0 = pd.read_csv(os.path.join(work_dir,f'out0_{query}.csv'))
@@ -31,24 +38,22 @@ def downloads(query,sleeps):
         data3 = pd.read_csv(os.path.join(work_dir,f'out3_{query}.csv'))
         if size_residual != 0:
             data4 = pd.read_csv(os.path.join(work_dir,f'out4_{query}.csv'))
-    else:
-        data = pd.read_csv(os.path.join(work_dir,f'{query}.csv'))
+    elif size<100 and size>0:
+        data = pd.read_csv(os.path.join(work_dir,f'{query}.csv'),nrows=size)
 
     def download(data, query):
         html_export = export_dir / f'{query}'
-        if not html_export.exists():
-            html_export.mkdir()
         for i in range(size):
             # url为链接，id为标题
             if size > 100:
                 url = data.iloc[i, 3]
                 print(data.iloc[i, 2],url)
                 id = data.iloc[i, 2].replace("'",' ').replace("|",'\\').replace('/','\\')
-            else:
+            elif size<100 and size>0:
                 url = data.iloc[i, 2]
                 id = data.iloc[i, 1].replace("'",' ').replace("|",'\\').replace('/','\\')
             # 读取目标url
-            path = Path.cwd().parent / 'html' / query / f'{id}.html'
+            path = html_export / f'{id}.html'
             if not os.path.exists(path):
                 print(id)
                 try:
@@ -96,6 +101,7 @@ def downloads(query,sleeps):
         os.remove(os.path.join(work_dir, f'out3_{query}.csv'))
         if size_residual != 0:
             os.remove(os.path.join(work_dir, f'out4_{query}.csv'))
-    else:
+    elif size<100 and size>0:
         download(data, query)
-downloads('SAP中国顾问公众平台')
+    elif size == 0:
+        print('下载已完毕')
