@@ -1,25 +1,58 @@
-import sys
 import automatic
 import download_html
 import extract_pic
-import pandoc
-import key_word
-import contain_extract
-import pandas as pd
+import predict
+import nlp
 from pathlib import Path
-import time
-import random
+import pandas as pd
+pd.set_option('max_colwidth',1000)
+import send_msg
+import os
 
-dir = Path.cwd().parent / '公众号.csv'
-account=pd.read_csv(dir)
-for i in range(len(account)):
-    account_id = account.iloc[i,0]
-    certification = account.iloc[i,1]
-    trademark = account.iloc[i,2]
-    category = account.iloc[i,3]
-    if trademark == 1:
-        automatic.automatics(account_id)
-        time.sleep(random.randint(180,300))
+checkFile = Path.cwd().parent / "isRunning.txt"
+with open(checkFile, 'w') as file:
+    file.write('isrunning')   
+
+query_list = ['SAP中国顾问公众平台','SAP会员服务','SAP天天事','SAP成长型企业社区','金蝶','金蝶K3','金蝶KIS','金蝶云服务','阿里云','阿里研究院']
+# 用于标题筛选
+# 在线直播
+title1 = ['直播']
+# 企业合作
+title2 = ['携手','协助','合作','联合','加盟','协议','签署','签约','联手','牵手','案例']
+# 活动会议
+title3 = ['会议','峰会','会场','大会','活动','举行','举办','开幕','训练']
+# 新品上市
+title4 = ['新品','发布','推出','开放','上线']
+title_tag = {'在线直播':title1,'企业合作':title2,'活动会议':title3,'新品上市':title4}
+
+# 在线直播
+tag1 = ['直播']
+# 企业合作
+tag2 = ['伙伴','仪式','启动','携手','协助','合作','联合','加盟','协议','签署','共同','签约','共建','共赢','联手','双方','牵手','效率','搭建','选择','传统','需求','解决','高效','成本','案例']
+# 活动会议
+tag3 = ['会议','峰会','会场','大会','议程','参加','活动','举行','致辞','主办','举办','邀请','探讨','参会','现场','讲座','日程','出席','开幕','训练',]
+# 新品上市
+tag4 = ['新品','解决方案','助力','咨询热线','发布','全新','推出','开放','上线']
+tag = {'在线直播':tag1,'企业合作':tag2,'活动会议':tag3,'新品上市':tag4}
+
+SENDER = 'fangmingjin97@gmail.com'
+SMTP_SERVER = 'smtp.gmail.com'
+USER_ACCOUNT = {'username':'fangmingjin97@gmail.com', 'password':'Xiao19970523@'}
+receivers = ['enelothe@gmail.com']
+
+automatic.automatics(query_list)
+sizes = []
+for query in query_list:
+    download_html.downloads(query)
+    extract_pic.extract_pic(query)
+    size_new = predict.category(query, tag, title_tag)
+    print(size_new)
+    predict.predict(query,0.7,0.5,1,9,0,4)
+    #nlp.nlp(query)
+    sizes.append(size_new)
+send_msg.send_mail(query_list,sizes=sizes)
+
+os.remove(checkFile)
 
 # key_query={'魔戒':{'魔戒','指环王','三部曲'},'霍比特人':{'霍比特人','五军之战','五军','霍比特'}}
 # query_list = ["中土红皮书","精灵宝钻"]
