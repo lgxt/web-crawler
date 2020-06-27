@@ -11,15 +11,20 @@ import csv
 import pandas as pd
 import os
 from pathlib import Path
-from goto import with_goto
 
 
-def automatics(query_list,sleeps):
+def automatics(query_list,end_time="2017-01-01",sleeps=180):
+
+    #end_time 新功能，选择下载某时间之前的文章，格式为年-月-日
+    # 将其转换为时间数组
+    timeArray = time.strptime(end_time, "%Y-%m-%d")
+    # 转换为时间戳:
+    timeStamp = int(time.mktime(timeArray))
+
     # 设置路径
     work_dir = Path.cwd().parent / 'csv'
     if not work_dir.exists():
         work_dir.mkdir()
-
     # 调用谷歌浏览器驱动   如果本地电脑未安装谷歌驱动，请网上下载
     # 请将 chromedriver 移动至根目录
     driver = webdriver.Chrome()
@@ -56,7 +61,6 @@ def automatics(query_list,sleeps):
         url = "https://mp.weixin.qq.com"
         response = requests.get(url, cookies=cookies)
         token = re.findall(r'token=(\d+)', str(response.url))[0] # 有时会随机报错，重试就好，可能你扫码的速度慢
-
         #随机user-agent
         user_agent_list=[]
         for i in range(30):
@@ -119,9 +123,14 @@ def automatics(query_list,sleeps):
             num = int(int(max_num) / 5) #页数
         except:
             print("进入微信公众号列表--请求失败",'query=',query)
-        begin= 430
-        num= 120
-        while num +1> 0 :
+        begin= 0
+        exitFlag = False
+        export_dir = work_dir / "{}.csv".format(query)
+        if export_dir.exists():
+            initial_title = pd.read_csv(export_dir)['title'][0]
+        else:
+            initial_title = '文件不存在'
+        while (num +1> 0):
             query_id_data = {
             'token': token,
             'lang': 'zh_CN',
@@ -145,6 +154,10 @@ def automatics(query_list,sleeps):
                 query_fakeid_response = requests.get(appmsg_url, cookies=cookies, headers=header, params=query_id_data)
                 fakeid_list = query_fakeid_response.json().get('app_msg_list')
                 for item in fakeid_list:
+                    if item['create_time'] < timeStamp or item["title"] == initial_title:
+                        print('exitFlag = True')
+                        exitFlag = True
+                        break
                     items = []
                     items.append(item["title"])
                     items.append(item["link"])
@@ -153,11 +166,17 @@ def automatics(query_list,sleeps):
                 begin = int(begin)
                 begin+=5
                 time.sleep(random.randint(sleeps,sleeps+60))
+                if exitFlag == True:
+                    break
             except:
                 print("下载页面失败--请求错误", 'begin=', begin, 'num=', num, 'query=', query)
                 break
         name= ['title','link']
-        test= pd.DataFrame(columns=name,data=content_list)
-        test = test.drop_duplicates(['title'])
-        test.to_csv(os.path.join(work_dir,"{}.csv".format(query)),mode='a',encoding='utf-8-sig')
-automatics(query)
+        if export_dir.exists():
+            test = pd.DataFrame(columns=name,data=content_list)
+            previous = pd.read_csv(export_dir,usecols=['title','link'])
+            test.to_csv(export_dir, mode='w', encoding='utf-8-sig')
+            previous.to_csv(export_dir, mode='a', encoding='utf-8-sig',header=0)
+        else:
+            test = pd.DataFrame(columns=name,data=content_list)
+            test.to_csv(export_dir,mode='a',encoding='utf-8-sig')
