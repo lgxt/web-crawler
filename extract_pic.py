@@ -9,14 +9,15 @@ import random
 import uuid
 import re
 import filetype
+import pandas as pd
 
 def extract_pic(query):
-    work_dir = Path.cwd().parent
-    import_html_dir = work_dir / 'html' / query
-    dir = work_dir / 'pic'
+    import_html_dir = Path.cwd().parent / 'html' / query
+    dir = Path.cwd().parent / 'pic'
+    work_dir = Path.cwd().parent / 'csv'
     if not dir.exists():
         dir.mkdir()
-    pic_dir = work_dir / 'pic' / query
+    pic_dir = dir / query
     if not pic_dir.exists():
         pic_dir.mkdir()
 
@@ -31,24 +32,30 @@ def extract_pic(query):
              }
 
     reg_all = ['data-src="(.+?)"',':image" content="(.+?)"'] #识别图片链接的正则表达
-    for file in list(import_html_dir.glob('*.html')):
-        filename = os.path.basename(file)
-        tar_link = work_dir / 'pic' / query / filename.rstrip('.html')
+    html_num = len(list(import_html_dir.glob('*.html')))
+    pic_num = len(list(pic_dir.glob('*.html')))
+    size = html_num - pic_num
+
+    csvfile = pd.read_csv(os.path.join(work_dir,f'{query}.csv'),nrows=size)
+    for i in range(size):
+        title = csvfile.iloc[i,1].replace("'",' ').replace("|",'\\').replace('/','\\')
+        filename = f'{title}.html'
+        file = import_html_dir / filename
+        tar_link = dir / query / filename.rstrip('.html')
         if not os.path.exists(tar_link):
             tar_link.mkdir()
             with open(file, encoding='utf-8') as f:
                 html_content = f.read()
             imglist = []
-            # 获得图片链接列表
             for reg in reg_all:
                 imgre = re.compile(reg)
                 imglist = re.findall(imgre, html_content)+imglist
-            imglist = list(set(imglist)) 
+            imglist = list(set(imglist))
             print(imglist)
             for item in imglist:
                 if not item.startswith('http'):
                     item = f'http://{item}'
-                try: #图片下载，只下载jpeg与gif类
+                try:
                     img_data = requests.get(item, headers=header).content
                     if str(filetype.guess(img_data)).count('Jpeg')>0 or str(filetype.guess(img_data)).count('Gif')>0:
                         style=re.split(r'[.\s]',str(filetype.guess(img_data)))[3].lower()
@@ -56,5 +63,4 @@ def extract_pic(query):
                             f.buffer.write(img_data)
                 except:
                     print('error',filename,item)
-            time.sleep(3) #下载图片不需要限速
-extract_pic('金蝶')
+            time.sleep(3)
