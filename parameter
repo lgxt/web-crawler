@@ -86,11 +86,9 @@ def category_train(path,title_tag,tag):
         for item in word_final:
             write.writerow(item)
 
-category_train()
-
 # 利用训练集进行参数选择
-# 根据之前predict.csv的结果预测并输出预测结果，可以利用输出的统计指标选择参数
-def predict_train(title_tag,tag,k1,n2,n3):
+# 根据之前predict.csv的结果预测并输出预测结果，可以选择参数
+def predict_train(title_tag,tag,k1,k2,n2,n3,n4,n5):
     import_csv_dir = Path.cwd().parent / 'category' / 'predict.csv'
     output_csv_dir = Path.cwd().parent / 'category' / 'predict.csv'
     csv_import = pd.read_csv(import_csv_dir)
@@ -99,6 +97,10 @@ def predict_train(title_tag,tag,k1,n2,n3):
     FP = 0
     TN = 0
     TP = 0
+    FN2 = 0
+    FP2 = 0
+    TN2 = 0
+    TP2 = 0
     for i in range(len(csv_import)):
         row = []
         row = list(csv_import.iloc[i,:])
@@ -114,43 +116,79 @@ def predict_train(title_tag,tag,k1,n2,n3):
                 n += 1
                 lists.append(key)
         if n == 1:
-            if lists[0] == '企业合作':
-                category = lists[0]
-        elif n >= 1:
-            if lists.count('企业合作') >= 1:
-                category = '企业合作'
-            else:
-                category = ''
+            category = lists[0]
+        elif n > 1:
+            if lists.count('在线直播') >= 1:
+                category = '在线直播'
+            elif lists.count('在线直播') == 0:
+                if lists.count('企业合作') >= 1:
+                    category = '企业合作'
+                elif lists.count('企业合作') == 0:
+                    if lists.count('活动会议') >= 1:
+                        category = '活动会议'
         elif n == 0:
-        
             # 使用正文判断文章内容
             fraction = csv_import['企业合作'][i]/(csv_import['新品上市'][i]+csv_import['企业合作'][i]+csv_import['活动会议'][i])
-            if csv_import['在线直播'][i] == 0 and fraction >= k1 and csv_import['企业合作'][i] >= n2:
-                category = '企业合作'
-            elif csv_import['在线直播'][i] == 0 and fraction < k1 and csv_import['企业合作'][i] >= n3:
-                category = '企业合作'
-            elif csv_import['在线直播'][i] >= 1:
-                category = ''
-            else:
-                category = ''
-        
-        #统计TP,TN,FP,FN，计算specifity和sensitivity，利用该统计指标，我们可以了解分类效果好坏
-        if category == '企业合作' and (csv_import['category'][i] == '企业合作' or csv_import['category'][i] == '客户案例'):
+            fraction2 = csv_import['活动会议'][i] / (csv_import['新品上市'][i] + csv_import['企业合作'][i] + csv_import['活动会议'][i])
+            if csv_import['在线直播'][i] >= 1:
+                category = '在线直播'
+            elif csv_import['在线直播'][i] == 0:
+                if fraction >= k1:
+                    if csv_import['企业合作'][i] >= n2:
+                        category = '企业合作'
+                    elif csv_import['企业合作'][i] < n2:
+                        if fraction2 >= k2 and csv_import['企业合作'][i] >= n4:
+                            category = '活动会议'
+                        elif fraction2 < k2 and csv_import['企业合作'][i] >= n5:
+                            category = '活动会议'
+                        elif fraction2 >= k2 and csv_import['企业合作'][i] < n4 and csv_import['新品上市'][i] >= 2:
+                            category = '新品上市'
+                        elif fraction2 < k2 and csv_import['企业合作'][i] >= n5 and csv_import['新品上市'][i] >= 2:
+                            category = '新品上市'
+                        else:
+                            category = ''
+                if fraction < k1:
+                    if csv_import['企业合作'][i] >= n3:
+                        category = '企业合作'
+                    elif csv_import['企业合作'][i] < n3:
+                        if fraction2 >= k2 and csv_import['企业合作'][i] >= n4:
+                            category = '活动会议'
+                        elif fraction2 < k2 and csv_import['企业合作'][i] >= n5:
+                            category = '活动会议'
+                        elif fraction2 >= k2 and csv_import['企业合作'][i] < n4 and csv_import['新品上市'][i] >= 2:
+                            category = '新品上市'
+                        elif fraction2 < k2 and csv_import['企业合作'][i] >= n5 and csv_import['新品上市'][i] >= 2:
+                            category = '新品上市'
+                        else:
+                            category = ''
+
+        if category == '企业合作' and csv_import['category'][i] == '企业合作':
             TP += 1
-        elif category == '' and (csv_import['category'][i] != '企业合作' and csv_import['category'][i] != '客户案例'):
+        elif category != '企业合作' and csv_import['category'][i] != '企业合作':
             TN += 1
-        elif category == '企业合作' and (csv_import['category'][i] != '企业合作' and csv_import['category'][i] != '客户案例'):
+        elif category == '企业合作' and csv_import['category'][i] != '企业合作':
             FP += 1
-        elif category == '' and (csv_import['category'][i] == '企业合作' or csv_import['category'][i] == '客户案例'):
+        elif category != '企业合作' and csv_import['category'][i] == '企业合作':
             FN += 1
+
+        if category == '活动会议' and csv_import['category'][i] == '活动会议':
+            TP2 += 1
+        elif category != '活动会议' and csv_import['category'][i] != '活动会议':
+            TN2 += 1
+        elif category == '活动会议' and csv_import['category'][i] != '活动会议':
+            FP2 += 1
+        elif category != '活动会议' and csv_import['category'][i] == '活动会议':
+            FN2 += 1
         row.append(category)
         category_list.append(row)
-    print(TP,TN,FP,FN)
+    print(TP,TN,FP,FN,TP2,TN2,FP2,FN2)
     specificity = TN/(FP+TN)
     sensitivity = TP/(TP+FN)
-    return k1,n2,n3,sensitivity,specificity
-    
-    #输出预测结果
+    specificity2 = TN2 / (FP2 + TN2)
+    sensitivity2 = TP2 / (TP2 + FN2)
+    return k1,k2,n2,n3,n4,n5,sensitivity,specificity,sensitivity2,specificity2
+
+    '''
     with codecs.open(filename=output_csv_dir, mode='w', encoding='utf-8-sig')as f:
         write = csv.writer(f, dialect='excel')
         write.writerow(
@@ -159,19 +197,47 @@ def predict_train(title_tag,tag,k1,n2,n3):
 
         for item in category_list:
             write.writerow(item)
+    '''
 
-#输出统计指标至roc.csv，帮助测试参数，最终选择0.7,1,6
+#帮助测试参数
 output_csv_dir = Path.cwd().parent / 'category' / 'roc.csv'
 rows = []
-for k1 in numpy.arange(0,1,0.1):
-    for n2 in range(0,10,1):
-        for n3 in range(0,10,1):
+for k1 in [0.5,0.6,0.7,0.8]:
+    for n2 in [0,1,2,3,4,5]:
+        for n3 in [4,5,6,7,8,9]:
             if n3>n2:
-                row = []
-                row = list(predict_train(k1,n2,n3))
-                rows.append(row)
+                for k2 in [0.5,0.6,0.7,0.8]:
+                    for n4 in [0,1,2,3,4,5]:
+                        for n5 in [4,5,6,7,8,9]:
+                            if n5 > n4:
+                                row = []
+                                row = list(predict_train(title_tag,tag,k1,k2,n2,n3,n4,n5))
+                                rows.append(row)
 with codecs.open(filename=output_csv_dir, mode='w', encoding='utf-8-sig')as f:
     write = csv.writer(f, dialect='excel')
-    write.writerow(['k1','n2','n3','sensitivity','specifity'])
+    write.writerow(['k1','k2','n2','n3','n4','n5','sensitivity','specifity','sensitivity2','specifity2'])
     for item in rows:
         write.writerow(item)
+
+#参数筛选
+'''
+最佳结果
+k1              0.700000
+k2              0.500000
+n2              1.000000
+n3              9.000000
+n4              0.000000
+n5              4.000000
+企业合作
+sensitivity     0.800000
+specifity       0.848214
+活动会议
+sensitivity     0.712121
+specifity      0.705202
+趋向于选择使企业合作准确度更高
+'''
+output_csv_dir = Path.cwd().parent / 'category' / 'roc.csv'
+roc = pd.read_csv(output_csv_dir)
+for i in range(len(roc)):
+    if roc.iloc[i,6]>0.7 and roc.iloc[i,7]>0.7 and roc.iloc[i,8]>0.7 and roc.iloc[i,9]>0.7:
+        print(roc.iloc[i,])
