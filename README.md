@@ -97,3 +97,11 @@ tag（用于正文筛选）title_tag（用于正文筛选）格式如下：
 **使用jieba提取关键词并分类效果较差，已放弃维护key_word以及contain_extract两个程序**
 
 **添加使用该程序获得的结果**
+
+**将结果发送至邮箱**
+
+send_msg.send_mail(query_list,sizes=sizes)
+
+**提取公众号文章中的公司名**
+
+nlp.nlp(query)
