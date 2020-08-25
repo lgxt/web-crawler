@@ -13,8 +13,11 @@ checkFile = Path.cwd().parent / "isRunning.txt"
 with open(checkFile, 'w') as file:
     file.write('isrunning')   
 
+#公众号名称
 query_list = ['SAP中国顾问公众平台','SAP会员服务','SAP天天事','SAP成长型企业社区','金蝶','金蝶K3','金蝶KIS','金蝶云服务','阿里云','阿里研究院']
-# 用于标题筛选
+
+# 用于文章（标题）分类
+
 # 在线直播
 title1 = ['直播']
 # 企业合作
@@ -24,6 +27,8 @@ title3 = ['会议','峰会','会场','大会','活动','举行','举办','开幕
 # 新品上市
 title4 = ['新品','发布','推出','开放','上线']
 title_tag = {'在线直播':title1,'企业合作':title2,'活动会议':title3,'新品上市':title4}
+
+# 用于文章（内容）分类
 
 # 在线直播
 tag1 = ['直播']
@@ -35,9 +40,9 @@ tag3 = ['会议','峰会','会场','大会','议程','参加','活动','举行',
 tag4 = ['新品','解决方案','助力','咨询热线','发布','全新','推出','开放','上线']
 tag = {'在线直播':tag1,'企业合作':tag2,'活动会议':tag3,'新品上市':tag4}
 
-SENDER = 'fangmingjin97@gmail.com'
-SMTP_SERVER = 'smtp.gmail.com'
-USER_ACCOUNT = {'username':'fangmingjin97@gmail.com', 'password':'Xiao19970523@'}
+SENDER = 'YNWAGeorge@163.com'
+SMTP_SERVER = 'smtp.163.com'
+USER_ACCOUNT = {'username':'YNWAGeorge@163.com', 'password':''}
 receivers = ['enelothe@gmail.com']
 
 automatic.automatics(query_list)
@@ -45,7 +50,7 @@ sizes = []
 for query in query_list:
     download_html.downloads(query)
     extract_pic.extract_pic(query)
-    size_new = predict.category(query, tag, title_tag)
+    size_new = predict.category(query, tag, title_tag) #文章分类，输出size
     print(size_new)
     predict.predict(query,0.7,0.5,1,9,0,4)
     #nlp.nlp(query)
