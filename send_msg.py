@@ -31,6 +31,6 @@ def send_mail(query_list,sizes):
     path1 = '/Users/fangmingjin/PycharmProjects/web_spider/category/企业合作.csv'
     path2 = '/Users/fangmingjin/PycharmProjects/web_spider/category/活动会议.csv'
     subject = '微信分类' + ' ' + time.strftime("%Y-%m-%d", time.localtime())
-    yag = yagmail.SMTP(user='fangmingjin97@gmail.com',password='Xiao19970523@',host='smtp.gmail.com')
+    yag = yagmail.SMTP(user='******@gmail.com',password='******',host='smtp.gmail.com')
     yag.send(to='enelothe@gmail.com',subject=subject,contents=['今日微信文章分类请见附件：',path1,path2])
 '''
